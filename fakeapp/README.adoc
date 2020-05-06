@@ -1,0 +1,89 @@
+= Fake rest-json app used for demo
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+ifndef::env-github[]
+:imagesdir: ./
+endif::[]
+:toc:
+:toc-placement!:
+
+This app offers a simple REST API for the purpose of the performance tests that are demonstrated in this project. This was build based on Quarkus rest-json-quickstart project.
+If you want to learn more about Quarkus, please visit its website: https://quarkus.io/ .
+
+Different response times can be simulated [TO DO]. The following parameters are configurable through a configMap and related to the processing of a single message.
+
+* load in fraction of CPU cores available (capped to 1)
+* duration in milliseconds
+* load deviation
+* duration deviation
+
+The distribution is normal/Gaussian:
+
+  Random.nextGaussian() x processing.duration.deviation + processing.duration
+
+If the processing duration is set to 50 a deviation of 10 means that 70% of values will fall between duration +/- 10, in other words between 40 and 60 milliseconds.
+Choosing a value of 0 means no deviation and the duration or load is always the same.
+
+Failure injection may be added with a future version.
+
+== Build
+
+The container image can easily be build with...
+[TO DO]
+
+== Deployment
+
+[TODO: Deployments should be used instead of deployment configuration]
+After the build a deployment configuration has been created under....  and can be used to deploy the image with:
+
+ $ ...
+
+[TODO]
+
+== Certificates
+
+The certificate extraction and keystore creation.... 
+[TO DO]
+
+[source,bash]
+----
+$ mkdir certs
+$ ...
+$ keytool -v -import -file certs/tls.crt -alias cacrt -keystore certs/app.jks
+----
+
+The next step is to create a secret containing the java keystore and the password to access it:
+
+[source,bash]
+----
+$ oc create secret generic app-jks --from-literal=transport.trustStorePassword=xxxxxx --from-file=./certs/app.jks
+----
+
+The secret can then be mounted in the container by updating the deployment configuration with the following command. You won't need this step if you have used the deployment configuration definition file provided in the git repository.
+
+ $ oc set volume dc/fakeapp --add --name=broker-jks -m /opt/broker-jks -t secret --secret-name=app-broker-jks
+
+== Configuration externalisation
+
+[TODO]
+You may have noted that the openshift directory in the git repository also contains a configMap. This configMap is used for externalising environment dependent properties that are injected into the application through application.properties. Defaults can be defined in the property file provided with the application archive (jar). Only properties whose values should be overwritten can be specified in the ConfigMap.
+
+ $ oc create configmap fakeapp-props --from-env-file=src/main/resources/application.properties
+
+ application.properties is a streamlined version only including values that differ from the ones embedded in the jar.
+
+Mounting the configMap
+
+ $ oc set volume dc/fakeapp --add --name=app-properties -m /deployments/configuration -t configmap --configmap-name=fakeapp-props
+
+
+Updating the deployment to make use of the new application.properties
+
+ $ oc set env dc/fakeapp....................... 
+
+
