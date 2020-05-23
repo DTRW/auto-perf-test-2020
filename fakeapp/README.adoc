@@ -33,9 +33,24 @@ Failure injection may be added with a future version.
 
 == Build
 
-The container image can easily be build with...
-[TO DO]
+My preferred way of manipulating container and container images is with podman and buildah on my laptop powered by linux. That said I acknowledge that a lot of people do not have this good fortune or even the opportunity to run docker locally. https://github.com/GoogleContainerTools/jib[Jib] allows to work around that and what we will be using here.
+Quarkus offers a convenient way of adding the jib extension to the pom with:
 
+ ./mvnw quarkus:add-extension -Dextensions="container-image-jib"
+
+Once that's done the application and a runtime image can be built and pushed to your preferred registry, quay.io here, with a single command:
+
+ ./mvnw clean package -Dquarkus.container-image.build=true -Dquarkus.container-image.push=true -Dquarkus.container-image.registry=quay.io -Dquarkus.container-image.group=fgiloux -Dquarkus.container-image.username=fgiloux -Dquarkus.container-image.password="XXXXXXXXXXXXXXXXXXXX" -Dquarkus.container-image.insecure=true
+
+Alternatively it is possible to push the image directly to the registry embedded with an OpenShift cluster, CodeReady Container here:
+
+ ./mvnw clean package -Dquarkus.container-image.build=true -Dquarkus.container-image.push=true -Dquarkus.container-image.registry=default-route-openshift-image-registry.apps-crc.testing -Dquarkus.container-image.group=test -Dquarkus.container-image.username=user -Dquarkus.container-image.password=XXXXXXXXXXXXXXXXXXXXXxxx
+
+container-image.group matches a Kubernetes namespace.
+
+Note: the user specified with container-image.username needed to have registry-editor role for the command to succeed. image-pusher was not enough and there is an open issue at the time of writing for addressing this. 
+
+ 
 == Deployment
 
 [TODO: Deployments should be used instead of deployment configuration]
