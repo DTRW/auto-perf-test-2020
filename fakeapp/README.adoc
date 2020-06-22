@@ -38,6 +38,8 @@ Quarkus offers a convenient way of adding the jib extension to the pom with:
 
  ./mvnw quarkus:add-extension -Dextensions="container-image-jib"
 
+It is also possible to add files to the resulting image by placing them under src/main/jib with the complete path they will have on the container filesystem.
+
 Once that's done the application and a runtime image can be built and pushed to your preferred registry, quay.io here, with a single command:
 
  ./mvnw clean package -Dquarkus.container-image.build=true -Dquarkus.container-image.push=true -Dquarkus.container-image.registry=quay.io -Dquarkus.container-image.group=fgiloux -Dquarkus.container-image.username=fgiloux -Dquarkus.container-image.password="XXXXXXXXXXXXXXXXXXXX" -Dquarkus.container-image.insecure=true
@@ -50,7 +52,31 @@ container-image.group matches a Kubernetes namespace.
 
 Note: the user specified with container-image.username needed to have registry-editor role for the command to succeed. image-pusher was not enough and there is an open issue at the time of writing for addressing this. 
 
- 
+== Digression on security
+
+*Controlling system calls*
+
+As part of soak testing it is possible to create a custom seccomp profile for the application. This increases security of the platform by trimming down the number of system call types that can be done from the container. https://podman.io/blogs/2019/10/15/generate-seccomp-profiles.html[Here] are instructions on how podman and OCI hooks can be leveraged for the purpose.
+
+Once a custom seccomp profile has been created (similar to the one available in this repository) it is possible to configure the container to make use of with podman:
+
+ podman run --name fakeapp --security-opt seccomp=seccomp.json quay.io/fgiloux/rest-json-fakeapp:1.0-SNAPSHOT
+
+For doing the same with OpenShift or Kubernetes with CRI-O the profile needs to be copied on the nodes and an annotation set on the pod or container:
+
+ seccomp.security.alpha.kubernetes.io/pod: "localhost/seccomp.json"
+ container.seccomp.security.alpha.kubernetes.io/<container_name>: "localhost/seccomp.json"
+
+https://github.com/saschagrunert/seccomp-operator/blob/master/RFC.md[Further work] is being done that hopefully will allow to distribute specific seccomp profiles more easily through a ConfigMap or another mean.
+
+*Controlling file access*
+
+Besides system calls controlled by seccomp another aspect of security is SELinux policies. In most cases as here with this example you should be fine with the default security policy but if your container requires access to devices, files or ports on the host system it may need extra rights. Rather than running it as "privileged" it may be solved by creating a specific policy. An example I came across was a policy created for the use of NVidia GPU in OpenShift. https://github.com/containers/udica[Udica] is a convenient tool for the purpose.
+
+*Controlling capabilities*
+
+Capabilities inside a container are by default limited by the container runtime, for instance https://github.com/cri-o/cri-o/blob/release-1.19/internal/config/capabilities/capabilities.go#L14-L27[with cri-o]. Additional capabilities are dropped by the restricted scc in OpenShift: KILL, MKNOD (not allowed by default in cri-o), SETUID, SETGID. Security Context Constraints have been contributed to Kubernetes as PodSecurityPolicy, so that they can be used for the same goal. As application developer you are the best to know, which capabilities may be needed by your application and you can drop or add them as required.
+
 == Deployment
 
 [TODO: Deployments should be used instead of deployment configuration]
