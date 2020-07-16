@@ -79,8 +79,19 @@ Capabilities inside a container are by default limited by the container runtime,
 
 == Deployment
 
-[TODO: Deployments should be used instead of deployment configuration]
-After the build a deployment configuration has been created under....  and can be used to deploy the image with:
+Quarkus maven extension can generate object definitions that get stored in a list in target/kubernetes/kubernetes.yml
+Therefore the following dependency needs to be added to the pom:
+
+  <dependency>
+    <groupId>io.quarkus</groupId>
+    <artifactId>quarkus-kubernetes</artifactId>
+  </dependency>
+
+The following command will then get the file generated:
+
+ $ ./mvnw clean package -Dquarkus.kubernetes.deploy=true -Dquarkus.container-image.registry=quay.io
+
+Although very useful as a starting point I like to treat configuration as code and use a GitOps approach. In this respect I find better suited to have one file per object definition and to leverage https://github.com/kubernetes-sigs/kustomize[kustomize] for managing environment specifics. Tools like https://github.com/fluxcd/flux[Flux] or https://argoproj.github.io/argo-cd/[ArgoCD] can then be used for continuous delivery but this is another story. 
 
  $ ...
 
