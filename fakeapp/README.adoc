@@ -7,7 +7,7 @@ ifdef::env-github[]
 :warning-caption: :warning:
 endif::[]
 ifndef::env-github[]
-:imagesdir: ./
+:imagesdir: ./img
 endif::[]
 :toc:
 :toc-placement!:
@@ -96,6 +96,38 @@ Although very useful as a starting point I like to treat configuration as code a
  $ ...
 
 [TODO]
+
+== Monitoring
+
+With Quarkus it is straightforward to add MicroProfile metrics that are consumable by Prometheus. Therefore it is enough to add the follwoing dependency to the pom:
+
+   <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-metrics</artifactId>
+    </dependency>
+
+JVM metrics get then exposed by default. With very simple annotations counters, gauges and timers get added for the REST services.
+
+From the Prometheus side a serviceMonitor needs to get created to instruct Prometheus to scrap the application metrics.
+
+   apiVersion: monitoring.coreos.com/v1
+   kind: ServiceMonitor
+   metadata:
+     labels:
+       app.kubernetes.io/name: quarkus-getting-started
+     name: qgs-monitor
+   spec:
+     endpoints:
+     - interval: 30s
+       port: http
+       scheme: http
+     selector:
+       matchLabels:
+         app.kubernetes.io/name: "rest-json-fakeapp"
+
+It is then possible to build graphs and dashboards similar to this one (and surely nicer ones) where you can visualize how your application react to load both in term of response time and resource consumption.
+
+image::graph.png[]
 
 == Certificates
 
