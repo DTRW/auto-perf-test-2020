@@ -46,11 +46,15 @@ Once that's done the application and a runtime image can be built and pushed to 
 
 Alternatively it is possible to push the image directly to the registry embedded with an OpenShift cluster, CodeReady Container here:
 
- ./mvnw clean package -Dquarkus.container-image.build=true -Dquarkus.container-image.push=true -Dquarkus.container-image.registry=default-route-openshift-image-registry.apps-crc.testing -Dquarkus.container-image.group=test -Dquarkus.container-image.username=user -Dquarkus.container-image.password=XXXXXXXXXXXXXXXXXXXXXxxx
+ ./mvnw clean package -Dquarkus.container-image.build=true -Dquarkus.container-image.push=true -Dquarkus.container-image.registry=default-route-openshift-image-registry.apps-crc.testing -Dquarkus.container-image.group=test -Dquarkus.container-image.username=user -Dquarkus.container-image.password=XXXXXXXXXXXXXXXXXXXXXxxx -Dquarkus.container-image.insecure=true
 
-container-image.group matches a Kubernetes namespace.
+* container-image.group matches a Kubernetes namespace.
+* quarkus.container-image.password is the access token, either from a service account or from a user retrieved by $ oc whoami -t
+* quarkus.container-image.insecure=true
 
 Note: the user specified with container-image.username needed to have registry-editor role for the command to succeed. image-pusher was not enough and there is an open issue at the time of writing for addressing this. 
+
+ $ oc adm policy add-cluster-role-to-user registry-editor developer
 
 == Digression on security
 
@@ -92,8 +96,6 @@ The following command will then get the file generated:
  $ ./mvnw clean package -Dquarkus.kubernetes.deploy=true -Dquarkus.container-image.registry=quay.io
 
 Although very useful as a starting point I like to treat configuration as code and use a GitOps approach. In this respect I find better suited to have one file per object definition and to leverage https://github.com/kubernetes-sigs/kustomize[kustomize] for managing environment specifics. Tools like https://github.com/fluxcd/flux[Flux] or https://argoproj.github.io/argo-cd/[ArgoCD] can then be used for continuous delivery but this is another story. 
-
- $ ...
 
 [TODO]
 
